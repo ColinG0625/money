@@ -65,7 +65,7 @@ label{display:block;font-size:13px;color:var(--mute);margin-top:6px}
 <div class="sheet" id="sheet"></div>
 <div class="toast" id="toast"></div>
 <script>
-const BUILD = "20261107-103653";
+const BUILD = "20261107-104130";
 const API = "https://vwhriszjbrbnbapiwyjd.supabase.co/functions/v1/api";
 const CATS = ["Rent & Housing","Groceries","Groceries & Household","Gas","Dining","Subscriptions","Phone & Internet","Insurance","Health & Fitness","Loans","Shopping","Travel & Rides","Venmo & Zelle","Fees","Cash","Income","Transfer","Uncategorized"];
 const CADENCES = ["weekly","every 2 weeks","monthly","quarterly","yearly"];
@@ -104,7 +104,7 @@ const TABS = [["home", "Home", "M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0
 function nav() { $("nav").innerHTML = TABS.map(([id, l, p]) => `<a href="#${id}" class="${tab === id ? "on" : ""}"><svg viewBox="0 0 24 24"><path d="${p}"/></svg>${l}</a>`).join(""); }
 window.addEventListener("hashchange", () => { tab = location.hash.slice(1) || "home"; render(); });
 function render() { nav(); if (!H) return; window.scrollTo(0, 0); ({ home, activity, bills, goals, more })[tab]?.(); }
-function top(title) {
+function topbar(title) {
   const warn = H.connected ? "" : `<div class="note">Bank not connected yet. Go to More and paste your SimpleFIN setup token once.</div>`;
   return `<div class="topbar"><h1>${title}</h1><div class="small"><span>${H.last_pull ? "bank " + rel(H.last_pull) : "no bank data"}</span><button class="btn s" onclick="refresh()">Refresh</button></div></div>${warn}`;
 }
@@ -119,7 +119,7 @@ function home() {
     ...h.leaks.duplicates.map((d) => ({ t: "Charged twice?", n: `${d.name} ${dstr(d.dates[0])}`, a: d.amount, cls: "warn" })),
     ...h.leaks.price_increases.map((p) => ({ t: "Price went up", n: `${p.name} now ${usd(p.amount, true)}`, a: p.change, cls: "warn" })),
   ];
-  $("app").innerHTML = top("Money") + `
+  $("app").innerHTML = topbar("Money") + `
   <div class="card hero">
     <div class="sub">Safe to spend until payday ${dstr(h.next_pay)}</div>
     <div class="big ${h.safe_to_spend < 0 ? "bad" : ""}">${usd(h.safe_to_spend)}</div>
@@ -162,7 +162,7 @@ function goCat(c) { txState.category = c; txState.month = H.month; location.hash
 // ---- ACTIVITY ----
 async function activity() {
   const months = [...H.months_available].reverse();
-  $("app").innerHTML = top("Activity") + `
+  $("app").innerHTML = topbar("Activity") + `
   <input id="q" placeholder="Search" value="${esc(txState.q)}" oninput="txState.q=this.value;debounce(fetchTx)">
   <select onchange="txState.month=this.value;fetchTx()"><option value="">All months</option>${months.map((m) => `<option value="${m}" ${txState.month === m ? "selected" : ""}>${monthName(m)}</option>`).join("")}</select>
   <div>${["", ...CATS].map((c) => `<span class="chip ${txState.category === c ? "on" : ""}" onclick="txState.category='${c}';fetchTx()">${c || "All"}</span>`).join("")}</div>
@@ -201,7 +201,7 @@ async function saveMerchantCat(merchant_key) {
 // ---- BILLS ----
 function bills() {
   const h = H;
-  $("app").innerHTML = top("Bills") + `
+  $("app").innerHTML = topbar("Bills") + `
   <div class="grid">
     <div class="tile"><div class="l">Per month</div><div class="v">${usd(h.bills_per_month)}</div></div>
     <div class="tile"><div class="l">Before payday</div><div class="v">${usd(h.set_aside_until_payday)}</div></div>
@@ -234,7 +234,7 @@ async function delBill(id) { try { await api({ op: "bill_delete", id }); closeSh
 // ---- GOALS ----
 function goals() {
   const h = H, open = h.goals.filter((g) => !g.done), done = h.goals.filter((g) => g.done);
-  $("app").innerHTML = top("Goals") + `
+  $("app").innerHTML = topbar("Goals") + `
   <div class="card"><div class="row"><div class="n"><b>Going to goals every month</b><small>counted against safe-to-spend</small></div><div class="a">${usd(h.goals_per_month)}</div></div></div>
   <p><button class="btn p" onclick="editGoal()">Add a goal</button></p>
   <div class="card">${open.length ? open.map(goalRow).join("") : `<div class="empty">No goals yet. Start with a $1,000 cushion so a surprise never hits a card.</div>`}</div>
@@ -262,7 +262,7 @@ async function delGoal(id) { if (!confirm("Delete this goal?")) return; try { aw
 // ---- MORE ----
 function more() {
   const h = H, kinds = ["checking", "savings", "credit", "loan", "investment", "other"];
-  $("app").innerHTML = top("More") + `
+  $("app").innerHTML = topbar("More") + `
   <h2>Bank feed</h2>
   <div class="card">${h.connected ? `<div class="small">Connected through SimpleFIN Bridge (read-only). Pulls every 6 hours on its own; Refresh pulls now. Last pull ${rel(h.last_pull)}.</div>` : `
     <div class="small">One-time hookup. On <a href="https://bridge.simplefin.org" target="_blank" style="color:var(--accent)">bridge.simplefin.org</a> sign up, connect your bank and cards (you type your bank logins there, never here), then make a <b>setup token</b> and paste it below. It works once and is thrown away.</div>
