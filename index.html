@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Money</title>
+<meta name="description" content="Colin's live money tracker: balances, bills, set-aside, goals.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Money">
+<meta name="theme-color" content="#0f1115">
+<style>
+:root{--bg:#0f1115;--card:#171a21;--card2:#1f2330;--line:#2a2f3d;--fg:#f3f4f6;--mute:#9aa3b2;--dim:#6b7280;--accent:#DB802D;--good:#3ec77e;--bad:#ef5b5b;--warn:#f0b53d;--r:14px}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%}
+body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+.wrap{max-width:720px;margin:0 auto;padding:12px 16px}
+h1{font-size:22px;margin:8px 0 2px}h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin:22px 0 8px;font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin:0 0 10px}
+.hero{background:linear-gradient(160deg,#1c2130,#141720);text-align:center;padding:20px 14px}
+.hero .big{font-size:40px;font-weight:700;letter-spacing:-.02em;margin:2px 0}
+.hero .sub{color:var(--mute);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 12px}
+.tile .l{color:var(--mute);font-size:12px}.tile .v{font-size:18px;font-weight:600;margin-top:2px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}.row .n{flex:1;min-width:0}.row .n b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .n small,.small{color:var(--mute);font-size:13px}.row .a{font-weight:600;text-align:right;white-space:nowrap}
+.pos{color:var(--good)}.neg{color:var(--fg)}.warn{color:var(--warn)}.bad{color:var(--bad)}.mute{color:var(--mute)}.dim{color:var(--dim)}
+.tap{cursor:pointer}.tap:active{opacity:.7}
+.bar{height:8px;background:var(--card2);border-radius:6px;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:var(--accent);border-radius:6px}
+.bar i.over{background:var(--bad)}.bar i.good{background:var(--good)}
+.chip{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--card2);border:1px solid var(--line);font-size:13px;margin:0 6px 6px 0;color:var(--mute)}
+.chip.on{background:var(--accent);color:#111;border-color:var(--accent)}
+.tag{font-size:11px;padding:2px 7px;border-radius:6px;background:var(--card2);color:var(--mute);margin-left:6px;vertical-align:middle}
+.tag.found{background:#3a2d12;color:var(--warn)}.tag.pend{background:#2a2f3d}
+button,.btn{font:inherit;border:0;border-radius:10px;padding:10px 14px;background:var(--card2);color:var(--fg);cursor:pointer}
+.btn.p{background:var(--accent);color:#111;font-weight:600}.btn.d{background:#3a1d1d;color:var(--bad)}.btn.s{padding:6px 10px;font-size:13px}
+input,select,textarea{font:inherit;width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:4px 0 10px}
+label{display:block;font-size:13px;color:var(--mute);margin-top:6px}
+.nav{position:fixed;left:0;right:0;bottom:0;background:#0b0d11;border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:5}
+.nav a{flex:1;text-align:center;padding:10px 0 8px;color:var(--dim);text-decoration:none;font-size:11px}
+.nav a svg{display:block;margin:0 auto 3px;width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav a.on{color:var(--accent)}
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;z-index:9}.sheet-bg.on{display:block}
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:88vh;overflow:auto;background:var(--card);border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));z-index:10;transform:translateY(100%);transition:transform .2s}
+.sheet.on{transform:none}.sheet h3{margin:0 0 10px;font-size:18px}
+@media(min-width:720px){.sheet{left:50%;right:auto;width:520px;transform:translate(-50%,100%)}.sheet.on{transform:translate(-50%,0)}}
+.topbar{display:flex;align-items:center;justify-content:space-between}
+.topbar .small{display:flex;gap:10px;align-items:center}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--dim);border-top-color:var(--accent);border-radius:50%;animation:s 1s linear infinite;vertical-align:middle}@keyframes s{to{transform:rotate(360deg)}}
+.empty{color:var(--mute);text-align:center;padding:20px}
+.note{background:#2b2210;border:1px solid #5a4312;color:#f5d58a;padding:10px 12px;border-radius:10px;font-size:14px;margin-bottom:10px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#222736;color:var(--fg);padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;z-index:20;pointer-events:none}.toast.on{opacity:1}
+.cat{display:flex;align-items:center;gap:10px;padding:8px 0}.cat .l{width:46%;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cat .b{flex:1}.cat .v{width:60px;text-align:right;font-size:14px;font-weight:600}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="empty"><span class="spin"></span> loading</div></div>
+<nav class="nav" id="nav"></nav>
+<div class="sheet-bg" id="sheetbg" onclick="closeSheet()"></div>
+<div class="sheet" id="sheet"></div>
+<div class="toast" id="toast"></div>
+<script>
+const BUILD = "20261107-103653";
+const API = "https://vwhriszjbrbnbapiwyjd.supabase.co/functions/v1/api";
+const CATS = ["Rent & Housing","Groceries","Groceries & Household","Gas","Dining","Subscriptions","Phone & Internet","Insurance","Health & Fitness","Loans","Shopping","Travel & Rides","Venmo & Zelle","Fees","Cash","Income","Transfer","Uncategorized"];
+const CADENCES = ["weekly","every 2 weeks","monthly","quarterly","yearly"];
+// ---- link code: ?k= once, then remembered on this device ----
+const qs = new URLSearchParams(location.search);
+if (qs.get("k")) { try { localStorage.setItem("money_k", qs.get("k")); } catch {} history.replaceState(null, "", location.pathname); }
+let K = null; try { K = localStorage.getItem("money_k"); } catch {}
+let H = null, tab = location.hash.slice(1) || "home", txState = { month: "", q: "", category: "", rows: null };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const usd = (n, cents = false) => { n = Number(n || 0); const s = Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: cents ? 2 : 0, maximumFractionDigits: cents ? 2 : 0 }); return (n < 0 ? "-$" : "$") + s; };
+const dstr = (d) => { if (!d) return ""; const x = new Date(d + "T12:00:00"); return x.toLocaleDateString("en-US", { month: "short", day: "numeric" }); };
+const rel = (iso) => { if (!iso) return "never"; const m = Math.round((Date.now() - Date.parse(iso)) / 60000); if (m < 2) return "just now"; if (m < 60) return m + " min ago"; const h = Math.round(m / 60); if (h < 36) return h + " h ago"; return Math.round(h / 24) + " days ago"; };
+const monthName = (m) => new Date(m + "-15T12:00:00").toLocaleDateString("en-US", { month: "long", year: "numeric" });
+function toast(m) { const t = $("toast"); t.textContent = m; t.classList.add("on"); setTimeout(() => t.classList.remove("on"), 2200); }
+async function api(body) {
+  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, k: K }) });
+  const j = await r.json().catch(() => ({ error: "bad reply" }));
+  if (!r.ok || j.error) throw new Error(j.error || ("HTTP " + r.status));
+  return j;
+}
+async function load(silent) {
+  if (!K) { $("app").innerHTML = `<div class="card" style="margin-top:40px"><h1>Money</h1><p class="small">Open this page with your personal link once and it stays signed in on this device.</p></div>`; return; }
+  if (!silent) $("app").innerHTML = `<div class="empty"><span class="spin"></span> loading</div>`;
+  try { H = await api({ op: "home" }); } catch (e) { $("app").innerHTML = `<div class="card"><b>Could not load.</b><div class="small">${esc(e.message)}</div><p><button class="btn" onclick="load()">Try again</button></p></div>`; return; }
+  render();
+}
+async function refresh() {
+  toast("Pulling from the bank...");
+  try { const r = await api({ op: "pull", force: true }); if (r.skipped) toast("Already fresh"); else if (r.bank_messages?.length) toast("Bank says: " + r.bank_messages[0]); else toast("Updated"); }
+  catch (e) { toast(e.message); }
+  load(true);
+}
+// ---- nav ----
+const TABS = [["home", "Home", "M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"], ["activity", "Activity", "M4 6h16M4 12h16M4 18h10"], ["bills", "Bills", "M8 7h8M8 11h8M8 15h5M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"], ["goals", "Goals", "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 11a1 1 0 1 0 0 2"], ["more", "More", "M5 12h.01M12 12h.01M19 12h.01"]];
+function nav() { $("nav").innerHTML = TABS.map(([id, l, p]) => `<a href="#${id}" class="${tab === id ? "on" : ""}"><svg viewBox="0 0 24 24"><path d="${p}"/></svg>${l}</a>`).join(""); }
+window.addEventListener("hashchange", () => { tab = location.hash.slice(1) || "home"; render(); });
+function render() { nav(); if (!H) return; window.scrollTo(0, 0); ({ home, activity, bills, goals, more })[tab]?.(); }
+function top(title) {
+  const warn = H.connected ? "" : `<div class="note">Bank not connected yet. Go to More and paste your SimpleFIN setup token once.</div>`;
+  return `<div class="topbar"><h1>${title}</h1><div class="small"><span>${H.last_pull ? "bank " + rel(H.last_pull) : "no bank data"}</span><button class="btn s" onclick="refresh()">Refresh</button></div></div>${warn}`;
+}
+// ---- HOME ----
+function home() {
+  const h = H, pay = h.paycheck;
+  const dueList = h.bills.filter((b) => b.next_due && b.next_due < h.next_pay);
+  const catRows = h.categories.filter((c) => c.this_month > 0 || c.usual > 0).slice(0, 8);
+  const max = Math.max(1, ...catRows.map((c) => Math.max(c.this_month, c.usual)));
+  const leaks = [
+    ...h.leaks.fees.map((f) => ({ t: "Fee", n: `${f.name} ${dstr(f.date)}`, a: f.amount, cls: "bad" })),
+    ...h.leaks.duplicates.map((d) => ({ t: "Charged twice?", n: `${d.name} ${dstr(d.dates[0])}`, a: d.amount, cls: "warn" })),
+    ...h.leaks.price_increases.map((p) => ({ t: "Price went up", n: `${p.name} now ${usd(p.amount, true)}`, a: p.change, cls: "warn" })),
+  ];
+  $("app").innerHTML = top("Money") + `
+  <div class="card hero">
+    <div class="sub">Safe to spend until payday ${dstr(h.next_pay)}</div>
+    <div class="big ${h.safe_to_spend < 0 ? "bad" : ""}">${usd(h.safe_to_spend)}</div>
+    <div class="sub">${usd(h.cash)} in checking, minus ${usd(h.set_aside_until_payday)} for bills due before payday${h.goals_per_month ? ", minus " + usd(h.goals_per_month) + " for goals" : ""}</div>
+  </div>
+  <div class="grid">
+    <div class="tile"><div class="l">Checking</div><div class="v">${usd(h.cash)}</div></div>
+    <div class="tile"><div class="l">Savings</div><div class="v">${usd(h.savings)}</div></div>
+    <div class="tile"><div class="l">Cards owed</div><div class="v ${h.card_owed > 0 ? "warn" : ""}">${usd(h.card_owed)}</div></div>
+  </div>
+  <h2>Set aside</h2>
+  <div class="card">
+    <div class="row"><div class="n"><b>Before payday (${dstr(h.next_pay)})</b><small>${dueList.length ? dueList.map((b) => b.name).join(", ") : "nothing due before then"}</small></div><div class="a">${usd(h.set_aside_until_payday)}</div></div>
+    <div class="row"><div class="n"><b>Rest of ${monthName(h.month).split(" ")[0]}</b><small>all bills still due this month</small></div><div class="a">${usd(h.set_aside_this_month)}</div></div>
+    <div class="row"><div class="n"><b>Every month for bills</b><small>${h.bills.length} recurring payments</small></div><div class="a">${usd(h.bills_per_month)}</div></div>
+    ${pay ? `<div class="row"><div class="n"><b>Paycheck</b><small>${esc(pay.name)}, ${pay.cadence}, last ${dstr(pay.last_paid)}</small></div><div class="a pos">${usd(pay.typical)}</div></div>` : `<div class="row"><div class="n"><small>No paycheck found yet; payday assumed in 2 weeks.</small></div></div>`}
+  </div>
+  <h2>${monthName(h.month)}</h2>
+  <div class="card">
+    <div class="grid" style="margin-bottom:8px">
+      <div><div class="small">In</div><div class="pos" style="font-weight:600">${usd(h.this_month.income)}</div></div>
+      <div><div class="small">Out</div><div style="font-weight:600">${usd(h.this_month.spending)}</div></div>
+      <div><div class="small">Net</div><div class="${h.this_month.net < 0 ? "bad" : "pos"}" style="font-weight:600">${usd(h.this_month.net)}</div></div>
+    </div>
+    <div class="small">Usual month: ${usd(h.usual_income)} in, ${usd(h.usual_spending)} out${h.prior.length ? " (last " + h.prior.length + " months)" : ""}</div>
+    ${h.movers.length ? `<div style="margin-top:10px">${h.movers.map((m) => `<div class="row"><div class="n"><b>${esc(m.category)}</b><small>${usd(m.this_month)} so far, usually ${usd(m.expected_so_far)} by now</small></div><div class="a ${m.change > 0 ? "warn" : "pos"}">${m.change > 0 ? "+" : ""}${usd(m.change)}</div></div>`).join("")}</div>` : ""}
+  </div>
+  <h2>Where it went</h2>
+  <div class="card">${catRows.length ? catRows.map((c) => `<div class="cat tap" onclick="goCat('${esc(c.category)}')"><div class="l">${esc(c.category)}</div><div class="b"><div class="bar"><i class="${c.usual && c.this_month > c.usual ? "over" : ""}" style="width:${Math.round(100 * c.this_month / max)}%"></i></div><div class="small" style="font-size:11px">usual ${usd(c.usual)}</div></div><div class="v">${usd(c.this_month)}</div></div>`).join("") : `<div class="empty">No spending yet this month</div>`}</div>
+  ${leaks.length ? `<h2>Leaks</h2><div class="card">${leaks.map((l) => `<div class="row"><div class="n"><b>${l.t}</b><small>${esc(l.n)}</small></div><div class="a ${l.cls}">${usd(l.a, true)}</div></div>`).join("")}</div>` : ""}
+  ${h.uncategorized.length ? `<h2>Needs a category</h2><div class="card">${h.uncategorized.slice(0, 5).map((u) => `<div class="row tap" onclick="catMerchant('${esc(u.merchant_key)}','${esc(u.name)}')"><div class="n"><b>${esc(u.name)}</b><small>${u.times} time${u.times > 1 ? "s" : ""}</small></div><div class="a">${usd(u.total)}</div></div>`).join("")}${h.uncategorized.length > 5 ? `<div class="small" style="padding-top:8px">and ${h.uncategorized.length - 5} more in Activity</div>` : ""}</div>` : ""}
+  <h2>Goals</h2>
+  <div class="card">${h.goals.length ? h.goals.filter((g) => !g.done).map(goalRow).join("") : `<div class="empty">No goals yet. <a href="#goals" style="color:var(--accent)">Add one</a></div>`}</div>
+  <h2>Recent</h2>
+  <div class="card">${h.recent.length ? h.recent.map(txRow).join("") : `<div class="empty">Nothing yet</div>`}</div>`;
+}
+const goalRow = (g) => `<div class="tap" style="padding:8px 0" onclick="editGoal('${g.id}')"><div class="row" style="border:0;padding:0"><div class="n"><b>${esc(g.name)}</b><small>${usd(g.saved)} of ${usd(g.target)}${g.by_date ? " by " + dstr(g.by_date) : ""}${g.needed_per_month != null ? " · needs " + usd(g.needed_per_month) + "/mo" : g.per_month ? " · " + usd(g.per_month) + "/mo" : ""}</small></div><div class="a ${g.on_track === false ? "warn" : ""}">${g.pct}%</div></div><div class="bar"><i class="${g.pct >= 100 ? "good" : ""}" style="width:${g.pct}%"></i></div></div>`;
+const txRow = (t) => `<div class="row tap" onclick="openTx('${esc(t.account_id)}','${esc(t.id)}')"><div class="n"><b>${esc(t.name)}${t.pending ? '<span class="tag pend">pending</span>' : ""}</b><small>${dstr(t.posted)} · ${esc(t.category)}</small></div><div class="a ${t.amount > 0 ? "pos" : ""}">${t.amount > 0 ? "+" : ""}${usd(t.amount, true)}</div></div>`;
+function goCat(c) { txState.category = c; txState.month = H.month; location.hash = "activity"; }
+// ---- ACTIVITY ----
+async function activity() {
+  const months = [...H.months_available].reverse();
+  $("app").innerHTML = top("Activity") + `
+  <input id="q" placeholder="Search" value="${esc(txState.q)}" oninput="txState.q=this.value;debounce(fetchTx)">
+  <select onchange="txState.month=this.value;fetchTx()"><option value="">All months</option>${months.map((m) => `<option value="${m}" ${txState.month === m ? "selected" : ""}>${monthName(m)}</option>`).join("")}</select>
+  <div>${["", ...CATS].map((c) => `<span class="chip ${txState.category === c ? "on" : ""}" onclick="txState.category='${c}';fetchTx()">${c || "All"}</span>`).join("")}</div>
+  <div class="card" id="txlist"><div class="empty"><span class="spin"></span></div></div>`;
+  fetchTx();
+}
+let deb; function debounce(f) { clearTimeout(deb); deb = setTimeout(f, 350); }
+async function fetchTx() {
+  const el = $("txlist"); if (!el) return;
+  try { const r = await api({ op: "tx", month: txState.month, q: txState.q, category: txState.category, limit: 300 }); txState.rows = r.rows;
+    el.innerHTML = r.rows.length ? r.rows.map(txRow).join("") + `<div class="small" style="padding-top:8px">${r.rows.length} shown · out ${usd(-r.rows.filter((t) => t.amount < 0 && t.category !== "Transfer").reduce((s, t) => s + t.amount, 0))}</div>` : `<div class="empty">Nothing matches</div>`;
+    document.querySelectorAll(".chip").forEach((c) => c.classList.toggle("on", c.textContent === (txState.category || "All")));
+  } catch (e) { el.innerHTML = `<div class="empty">${esc(e.message)}</div>`; }
+}
+function openTx(account_id, id) {
+  const t = (txState.rows || []).find((x) => x.account_id === account_id && x.id === id) || H.recent.find((x) => x.account_id === account_id && x.id === id);
+  if (!t) return;
+  sheet(`<h3>${esc(t.name)}</h3><div class="small">${dstr(t.posted)} · ${t.amount > 0 ? "+" : ""}${usd(t.amount, true)}${t.memo ? " · " + esc(t.memo) : ""}</div>
+  <label>Category</label>${catSelect("txcat", t.category)}
+  <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="txall" style="width:auto;margin:0" checked> Every charge from this place, now and in future</label>
+  <p><button class="btn p" onclick="saveTx('${esc(account_id)}','${esc(id)}')">Save</button></p>`);
+}
+const catSelect = (id, cur) => `<select id="${id}">${CATS.map((c) => `<option ${c === cur ? "selected" : ""}>${c}</option>`).join("")}<option value="__new">New category...</option></select>`;
+function pickCat(id) { const v = $(id).value; if (v !== "__new") return v; const n = prompt("New category name"); return n && n.trim() ? n.trim() : null; }
+async function saveTx(account_id, id) {
+  const cat = pickCat("txcat"); if (!cat) return;
+  try { await api({ op: "set_category", account_id, id, category: cat, all_from_merchant: $("txall").checked }); closeSheet(); toast("Saved"); H = await api({ op: "home" }); render(); } catch (e) { toast(e.message); }
+}
+function catMerchant(merchant_key, name) {
+  sheet(`<h3>${esc(name)}</h3><div class="small">Pick a category for every charge from this place.</div><label>Category</label>${catSelect("mcat", "Uncategorized")}<p><button class="btn p" onclick="saveMerchantCat('${esc(merchant_key)}')">Save</button></p>`);
+}
+async function saveMerchantCat(merchant_key) {
+  const cat = pickCat("mcat"); if (!cat) return;
+  try { await api({ op: "add_rule", pattern: merchant_key, category: cat }); closeSheet(); toast("Saved"); H = await api({ op: "home" }); render(); } catch (e) { toast(e.message); }
+}
+// ---- BILLS ----
+function bills() {
+  const h = H;
+  $("app").innerHTML = top("Bills") + `
+  <div class="grid">
+    <div class="tile"><div class="l">Per month</div><div class="v">${usd(h.bills_per_month)}</div></div>
+    <div class="tile"><div class="l">Before payday</div><div class="v">${usd(h.set_aside_until_payday)}</div></div>
+    <div class="tile"><div class="l">Rest of month</div><div class="v">${usd(h.set_aside_this_month)}</div></div>
+  </div>
+  <p class="small">Found automatically from repeating charges. Tap one to confirm it, fix the amount or date, or tell me it is not a bill. Add anything the bank does not show (rent by check, a yearly fee).</p>
+  <p><button class="btn p" onclick="editBill()">Add a bill</button></p>
+  <div class="card">${h.bills.length ? h.bills.map((b, i) => `<div class="row tap" onclick="editBill(${i})"><div class="n"><b>${esc(b.name)}${b.status === "found" ? '<span class="tag found">found</span>' : ""}</b><small>${b.cadence} · due ${dstr(b.next_due)}${b.next_due < h.next_pay ? " (before payday)" : ""}${b.price_change > 0 ? ` · <span class="warn">up ${usd(b.price_change, true)} from ${usd(b.was, true)}</span>` : ""}</small></div><div class="a">${usd(b.amount, true)}</div></div>`).join("") : `<div class="empty">No repeating charges found yet</div>`}</div>`;
+}
+function editBill(i) {
+  const b = i != null ? H.bills[i] : { name: "", amount: "", cadence: "monthly", next_due: "", category: "", status: "confirmed" };
+  sheet(`<h3>${i != null ? esc(b.name) : "Add a bill"}</h3>
+  ${b.detected ? `<div class="small">Seen ${b.times_seen} times, last ${dstr(b.last_charged)}.</div>` : ""}
+  <label>Name</label><input id="bname" value="${esc(b.name)}">
+  <label>Amount</label><input id="bamt" type="number" step="0.01" inputmode="decimal" value="${b.amount ?? ""}">
+  <label>How often</label><select id="bcad">${CADENCES.map((c) => `<option ${c === b.cadence ? "selected" : ""}>${c}</option>`).join("")}</select>
+  <label>Next due</label><input id="bdue" type="date" value="${b.next_due ?? ""}">
+  <label>Category</label>${catSelect("bcat", b.category || "Subscriptions")}
+  <p><button class="btn p" onclick="saveBill(${i ?? -1},'confirmed')">Save</button>
+  ${b.detected || b.id ? `<button class="btn d" onclick="saveBill(${i ?? -1},'ignored')">Not a bill</button>` : ""}
+  ${b.id && !b.merchant_key ? `<button class="btn" onclick="delBill('${b.id}')">Delete</button>` : ""}</p>`);
+}
+async function saveBill(i, status) {
+  const b = i >= 0 ? H.bills[i] : {};
+  const cat = pickCat("bcat"); if (status === "confirmed" && !cat) return;
+  try { await api({ op: "bill_upsert", id: b.id || undefined, merchant_key: b.merchant_key || undefined, name: $("bname").value, amount: $("bamt").value === "" ? null : Number($("bamt").value), cadence: $("bcad").value, next_due: $("bdue").value, category: cat, status });
+    closeSheet(); toast(status === "ignored" ? "Removed from bills" : "Saved"); H = await api({ op: "home" }); render(); } catch (e) { toast(e.message); }
+}
+async function delBill(id) { try { await api({ op: "bill_delete", id }); closeSheet(); H = await api({ op: "home" }); render(); } catch (e) { toast(e.message); } }
+// ---- GOALS ----
+function goals() {
+  const h = H, open = h.goals.filter((g) => !g.done), done = h.goals.filter((g) => g.done);
+  $("app").innerHTML = top("Goals") + `
+  <div class="card"><div class="row"><div class="n"><b>Going to goals every month</b><small>counted against safe-to-spend</small></div><div class="a">${usd(h.goals_per_month)}</div></div></div>
+  <p><button class="btn p" onclick="editGoal()">Add a goal</button></p>
+  <div class="card">${open.length ? open.map(goalRow).join("") : `<div class="empty">No goals yet. Start with a $1,000 cushion so a surprise never hits a card.</div>`}</div>
+  ${done.length ? `<h2>Done</h2><div class="card">${done.map(goalRow).join("")}</div>` : ""}`;
+}
+function editGoal(id) {
+  const g = H.goals.find((x) => x.id === id) || { name: "", target: "", saved: 0, account_id: "", per_month: "", by_date: "", priority: 1, done: false };
+  const sav = H.accounts.filter((a) => a.kind === "savings" || a.kind === "investment");
+  sheet(`<h3>${id ? esc(g.name) : "Add a goal"}</h3>
+  <label>Name</label><input id="gname" value="${esc(g.name)}" placeholder="Emergency fund">
+  <label>Target</label><input id="gtarget" type="number" step="1" inputmode="decimal" value="${g.target}">
+  <label>Count a savings account as the money saved</label><select id="gacct"><option value="">No, I will type it</option>${sav.map((a) => `<option value="${esc(a.id)}" ${a.id === g.account_id ? "selected" : ""}>${esc(a.nickname || a.name)} (${usd(a.balance)})</option>`).join("")}</select>
+  <label>Saved so far (if typed)</label><input id="gsaved" type="number" step="1" inputmode="decimal" value="${g.account_id ? "" : g.saved}">
+  <label>Putting in per month</label><input id="gpm" type="number" step="1" inputmode="decimal" value="${g.per_month}">
+  <label>By when (optional)</label><input id="gby" type="date" value="${g.by_date ?? ""}">
+  <label>Order (1 = first)</label><input id="gpri" type="number" value="${g.priority}">
+  <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="gdone" style="width:auto;margin:0" ${g.done ? "checked" : ""}> Done</label>
+  <p><button class="btn p" onclick="saveGoal('${id || ""}')">Save</button>${id ? `<button class="btn d" onclick="delGoal('${id}')">Delete</button>` : ""}</p>`);
+}
+async function saveGoal(id) {
+  try { await api({ op: "goal_upsert", id: id || undefined, name: $("gname").value, target: Number($("gtarget").value), saved: Number($("gsaved").value || 0), account_id: $("gacct").value, per_month: Number($("gpm").value || 0), by_date: $("gby").value, priority: Number($("gpri").value || 1), done: $("gdone").checked });
+    closeSheet(); toast("Saved"); H = await api({ op: "home" }); render(); } catch (e) { toast(e.message); }
+}
+async function delGoal(id) { if (!confirm("Delete this goal?")) return; try { await api({ op: "goal_delete", id }); closeSheet(); H = await api({ op: "home" }); render(); } catch (e) { toast(e.message); } }
+// ---- MORE ----
+function more() {
+  const h = H, kinds = ["checking", "savings", "credit", "loan", "investment", "other"];
+  $("app").innerHTML = top("More") + `
+  <h2>Bank feed</h2>
+  <div class="card">${h.connected ? `<div class="small">Connected through SimpleFIN Bridge (read-only). Pulls every 6 hours on its own; Refresh pulls now. Last pull ${rel(h.last_pull)}.</div>` : `
+    <div class="small">One-time hookup. On <a href="https://bridge.simplefin.org" target="_blank" style="color:var(--accent)">bridge.simplefin.org</a> sign up, connect your bank and cards (you type your bank logins there, never here), then make a <b>setup token</b> and paste it below. It works once and is thrown away.</div>
+    <label>SimpleFIN setup token</label><textarea id="tok" rows="3" placeholder="paste the setup token"></textarea>
+    <button class="btn p" onclick="connectBank()">Connect</button>`}
+  </div>
+  <h2>Accounts</h2>
+  <div class="card">${h.accounts.length ? h.accounts.map((a) => `<div class="row"><div class="n"><b>${esc(a.nickname || a.name)}</b><small>${esc(a.org)} · ${usd(a.balance, true)}${a.available != null && a.available !== a.balance ? " (" + usd(a.available, true) + " available)" : ""}</small></div><select style="width:auto;margin:0" onchange="setAcct('${esc(a.id)}',{kind:this.value})">${kinds.map((k) => `<option ${k === a.kind ? "selected" : ""}>${k}</option>`).join("")}</select></div>`).join("") : `<div class="empty">No accounts yet</div>`}</div>
+  <p class="small">Checking counts as cash on hand; savings can back a goal; cards show as owed. Fix the type if a guess is wrong.</p>
+  <h2>On your iPhone</h2>
+  <div class="card small">Open this page in Safari, tap Share, then <b>Add to Home Screen</b>. It opens like an app and stays signed in.</div>
+  <h2>Category rules</h2>
+  <div class="card"><button class="btn" onclick="showRules()">Show rules</button><div id="rules"></div></div>
+  <div class="small dim" style="text-align:center;margin-top:20px">build ${BUILD}</div>`;
+}
+async function connectBank() {
+  const token = $("tok").value.trim(); if (!token) return toast("Paste the token first");
+  toast("Connecting and pulling 2 years of history...");
+  try { const r = await api({ op: "connect", token }); toast(`Connected: ${r.accounts} accounts`); load(); } catch (e) { toast(e.message); }
+}
+async function setAcct(id, v) { try { await api({ op: "account_set", id, ...v }); H = await api({ op: "home" }); toast("Saved"); } catch (e) { toast(e.message); } }
+async function showRules() {
+  const r = await api({ op: "rules" });
+  $("rules").innerHTML = `<div class="small" style="margin:10px 0">First match wins. Yours are listed first.</div>` + r.rules.map((x) => `<div class="row"><div class="n"><b>${esc(x.pattern)}</b><small>${esc(x.category)}${x.source === "colin" ? " · yours" : ""}</small></div>${x.source === "colin" ? `<button class="btn s" onclick="delRule(${x.id})">Remove</button>` : ""}</div>`).join("");
+}
+async function delRule(id) { await api({ op: "delete_rule", id }); showRules(); H = await api({ op: "home" }); }
+// ---- sheet ----
+function sheet(html) { $("sheet").innerHTML = html; $("sheet").classList.add("on"); $("sheetbg").classList.add("on"); }
+function closeSheet() { $("sheet").classList.remove("on"); $("sheetbg").classList.remove("on"); }
+document.addEventListener("visibilitychange", () => { if (!document.hidden && H && Date.now() - Date.parse(H.now) > 10 * 60000) load(true); });
+load();
+</script>
+</body>
+</html>
